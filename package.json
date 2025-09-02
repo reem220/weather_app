@@ -1,0 +1,17 @@
+{
+  "name": "expressweb",
+  "version": "1.0.0",
+  "description": "<div align=\"center\">   <h1>weathertest</h1>",
+  "license": "ISC",
+  "author": "Amulya",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "start": "node src/app.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "express-handlebars": "^8.0.1",
+    "hbs": "^4.1.1"
+  }
+}
