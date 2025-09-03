@@ -45,10 +45,10 @@ jobs:
 
       - name: Extract app artifact
         run: |
-          cd app-package
-          tar -xzf app.tgz
+          mkdir -p app-package/src
+          tar -xzf app-package/app.tgz -C app-package/src --strip-components=1
 
-      - name: Checkout repo
+      - name: Checkout repo (for Dockerfile)
         uses: actions/checkout@v4
 
       - name: Log in to DockerHub
@@ -60,7 +60,7 @@ jobs:
       - name: Build and push Docker image (no cache)
         uses: docker/build-push-action@v6
         with:
-          context: ./app-package
+          context: ./app-package/src
           file: ./Dockerfile
           push: true
           no-cache: true
