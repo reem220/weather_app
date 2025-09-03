@@ -43,10 +43,14 @@ jobs:
           name: app-package
           path: app-package
 
+      - name: Check artifact exists
+        run: |
+          echo "Listing contents of app-package folder:"
+          ls -l app-package
+
       - name: Extract app artifact
         run: |
-          mkdir -p app-package/src
-          tar -xzf app-package/app.tgz -C app-package/src --strip-components=1
+          tar -xzf app-package/app.tgz -C app-package --strip-components=1
 
       - name: Checkout repo (for Dockerfile)
         uses: actions/checkout@v4
@@ -60,7 +64,7 @@ jobs:
       - name: Build and push Docker image (no cache)
         uses: docker/build-push-action@v6
         with:
-          context: ./app-package/src
+          context: ./app-package
           file: ./Dockerfile
           push: true
           no-cache: true
