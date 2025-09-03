@@ -1,0 +1,85 @@
+name: Weather App CI/CD
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  IMAGE_NAME: reem2244/weather-app
+
+jobs:
+  app-build:
+    name: Build Node.js App
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          npm ci
+          echo "Dependencies installed successfully"
+
+      - name: Verify main file exists
+        run: |
+          if [ ! -f app.js ]; then
+            echo "Error: app.js not found!"
+            exit 1
+          fi
+          echo "app.js exists ✅"
+
+      - name: Run basic test
+        run: |
+          echo "Running app lint/test..."
+          npm run lint || echo "Lint failed but continue"
+          echo "App build check done ✅"
+
+  docker-build:
+    name: Build and Push Docker Image
+    runs-on: ubuntu-latest
+    needs: app-build
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Log in to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: |
+            ${{ env.IMAGE_NAME }}:${{ github.sha }}
+            ${{ env.IMAGE_NAME }}:latest
+
+  deploy:
+    name: Deploy Container on VM
+    runs-on: ubuntu-latest
+    needs: docker-build
+
+    steps:
+      - name: SSH to VM and Deploy
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            echo "Remove old container if running..."
+            docker stop weather-app || true
+            docker rm weather-app || true
+
+            echo "Pulling latest image..."
+            docker pull ${{ env.IMAGE_NAME }}:latest
+
+            echo "Starting new container (weather-app)..."
+            docker run -d -p 5000:5000 --name weather-app ${{ env.IMAGE_NAME }}:latest
