@@ -43,6 +43,11 @@ jobs:
           name: app-package
           path: app-package
 
+      - name: Extract app artifact
+        run: |
+          cd app-package
+          tar -xzf app.tgz
+
       - name: Checkout repo
         uses: actions/checkout@v4
 
@@ -60,8 +65,8 @@ jobs:
           push: true
           no-cache: true
           tags: |
-            ${{ secrets.DOCKER_USERNAME }}/weather-app:${{ github.sha }}
-            ${{ secrets.DOCKER_USERNAME }}/weather-app:latest
+            ${{ env.IMAGE_NAME }}:${{ github.sha }}
+            ${{ env.IMAGE_NAME }}:latest
 
   deploy:
     name: Deploy Container on VM
@@ -76,18 +81,12 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
-            echo "Remove old latest image (if exists)..."
-            docker rmi -f ${{ secrets.DOCKER_USERNAME }}/nodeapp:latest || true
+            echo "Remove old container if running..."
+            docker stop weather-app || true
+            docker rm weather-app || true
 
             echo "Pulling latest image..."
-            docker pull ${{ secrets.DOCKER_USERNAME }}/nodeapp:latest
-
-            echo "Stopping old container..."
-            docker stop nodeapp || true
-            docker rm nodeapp || true
-
-            echo "Starting new container (nodeapp)..."
-            docker run -d -p 80:3000 --name nodeapp ${{ secrets.DOCKER_USERNAME }}/nodeapp:latest
+            docker pull ${{ env.IMAGE_NAME }}:latest
 
             echo "Starting new container (weather-app)..."
-            docker run -d -p 5000:5000 --name weather-app ${{ env.IMAGE_NAME }}:${{ github.run_number }}
+            docker run -d -p 5000:5000 --name weather-app ${{ env.IMAGE_NAME }}:latest
