@@ -60,8 +60,8 @@ jobs:
           push: true
           no-cache: true
           tags: |
-            ${{ secrets.DOCKER_USERNAME }}/nodeapp:${{ github.sha }}
-            ${{ secrets.DOCKER_USERNAME }}/nodeapp:latest
+            ${{ secrets.DOCKER_USERNAME }}/weather-app:${{ github.sha }}
+            ${{ secrets.DOCKER_USERNAME }}/weather-app:latest
 
   deploy:
     name: Deploy Container on VM
